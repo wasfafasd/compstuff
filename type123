@@ -3567,87 +3567,113 @@ function Compkiller:_LoadElement(Parent: Frame , EnabledLine: boolean , Signal)
 		return Args;
 	end;
 
-  function Args:AddKeybind(Config: MiniKeybind)
-  	Config = Compkiller.__CONFIG(Config, {
-  		Name = "Keybind",
-  		Default = nil,
-  		Flag = nil,
-  		Callback = function() end,
-  		Blacklist = {}
-  	})
+	function Args:AddKeybind(Config : Keybind)
+		Config = Compkiller.__CONFIG(Config,{
+			Name = "Keybind",
+			Default = nil,
+			Flag = nil,
+			Callback = function() end;
+			Blacklist = {}
+		});
 
-	local Block = Compkiller:_CreateBlock(Signal);
+		local Block = Compkiller:_CreateBlock(Signal);
 
-	Block:SetParent(Parent);
+		Block:SetParent(Parent);
 
-	Block:SetText(Config.Name);
+		Block:SetText(Config.Name);
 
-	Block:SetLine(EnabledLine);
+		Block:SetLine(EnabledLine);
 
-	Block:SetVisible(Signal:GetValue());
+		Block:SetVisible(Signal:GetValue());
 
-	local Keybind = Block:AddLink('Keybind' , Config.Default);
+		local Keybind = Block:AddLink('Keybind' , Config.Default);
 
-  	local IsBinding = false
-  
-  	local function IsBlacklist(v)
-  		return Config.Blacklist and (Config.Blacklist[v] or table.find(Config.Blacklist, v))
-  	end
-  
-  	if Config.Type == "ToggleKeybind" and typeof(Config.Default) == "string" then
-  		Library:GiveSignal(InputService.InputBegan:Connect(function(Input, Processed)
-  			if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name == Config.Default then
-  				task.spawn(Config.Callback)
-  			elseif Input.KeyCode == Enum.KeyCode.RightControl or (Input.KeyCode == Enum.KeyCode.RightShift and not Processed) then
-  				task.spawn(Config.Callback)
-  			end
-  		end))
-  	end
-  
-  	Compkiller:_Input(Keybind.Root, function()
-  		if IsBinding then return end
-  		IsBinding = true
-  
-  		Keybind.SetValue("...")
-  
-  		local Selected = nil
-  		while not Selected do
-  			local Key = UserInputService.InputBegan:Wait()
-  			if Key.KeyCode ~= Enum.KeyCode.Unknown and not IsBlacklist(Key.KeyCode) and not IsBlacklist(Key.KeyCode.Name) then
-  				Selected = Key.KeyCode
-  			elseif Key.UserInputType == Enum.UserInputType.MouseButton1 and not IsBlacklist("MouseLeft") then
-  				Selected = "MouseLeft"
-  			elseif Key.UserInputType == Enum.UserInputType.MouseButton2 and not IsBlacklist("MouseRight") then
-  				Selected = "MouseRight"
-  			end
-  		end
-  
-  		local KeyName = typeof(Selected) == "string" and Selected or Selected.Name
-  		Config.Default = KeyName
-  		Keybind.SetValue(KeyName)
-  		IsBinding = false
-  		Config.Callback(KeyName)
-  	end)
-  
-  	local Args = {}
-  	Args.Flag = Config.Flag
-  
-  	function Args:SetValue(value)
-  		Config.Default = value
-  		Keybind.SetValue(Config.Default)
-  		Config.Callback(Config.Default)
-  	end
-  
-  	function Args:GetValue()
-  		return typeof(Config.Default) == "string" and Config.Default or Config.Default.Name
-  	end
-  
-  	if Config.Flag then
-  		Compkiller.Flags[Config.Flag] = Args
-  	end
-  
-  	return Args
-  end
+		local IsBinding = false;
+
+		local IsBlacklist = function(v)
+			return Config.Blacklist and (Config.Blacklist[v] or table.find(Config.Blacklist,v))
+		end;
+
+		Compkiller:_Input(Keybind.Root,function()
+			if IsBinding then
+				return;
+			end;
+
+			Keybind.SetValue("...");
+
+			local Selected = nil;
+
+			while not Selected do
+				local Key = UserInputService.InputBegan:Wait();
+
+				if Key.KeyCode ~= Enum.KeyCode.Unknown and not IsBlacklist(Key.KeyCode) and not IsBlacklist(Key.KeyCode.Name) then
+					Selected = Key.KeyCode;
+				else
+					if Key.UserInputType == Enum.UserInputType.MouseButton1 and not IsBlacklist(Enum.UserInputType.MouseButton1) and not IsBlacklist("MouseLeft") then
+						Selected = "MouseLeft";
+					elseif Key.UserInputType == Enum.UserInputType.MouseButton2 and not IsBlacklist(Enum.UserInputType.MouseButton2) and not IsBlacklist("MouseRight") then
+						Selected = "MouseRight";
+					end;
+				end;
+			end;
+
+			local KeyName = typeof(Selected) == "string" and Selected or Selected.Name;
+
+			Config.Default = KeyName;
+
+			UserInputService.InputBegan:Connect(function(input, gameProcessed)
+				if gameProcessed then return end
+			
+				local key = (typeof(Config.Default) == "string") and Config.Default or Config.Default.Name
+				local current = input.KeyCode.Name
+			
+				if current == key then
+
+					local linkedToggle = Compkiller.Flags[SomeLinkedToggleFlag]
+					if linkedToggle and linkedToggle.SetValue then
+						local currentValue = linkedToggle:GetValue()
+						linkedToggle:SetValue(not currentValue)
+					end
+			
+					Config.Callback(key)
+				end
+			end)
+
+			Keybind.SetValue(Selected);
+
+			IsBinding = false;
+
+			Config.Callback(KeyName);
+		end);
+
+		local Args = {};
+
+		Args.Flag = Config.Flag;
+
+		function Args:SetValue(value)
+			Config.Default = value;
+
+			Keybind.SetValue(Config.Default);
+
+			Config.Callback(Config.Default);
+		end;
+
+		Args.Signal = Signal:Connect(function(bool)
+			Block:SetVisible(bool);
+		end);
+
+		Args.Link = Compkiller:_LoadOption(Block);
+
+		function Args:GetValue()
+			return (typeof(Config.Default) == "string" and Config.Default) or Config.Default.Name;
+		end;
+
+		if Config.Flag then
+			Compkiller.Flags[Config.Flag] = Args;
+		end;
+
+		return Args;
+	end;
 
 	function Args:AddColorPicker(Config: ColorPicker)
 		Config = Compkiller.__CONFIG(Config,{
