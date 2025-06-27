@@ -2820,6 +2820,21 @@ function Compkiller:_LoadOption(Value , TabSignal)
 
 			Config.Default = KeyName;
 
+			if not Args._Connection then
+				Args._Connection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+					if gameProcessed then return end
+			
+					local inputName = (typeof(Config.Default) == "string" and Config.Default) or Config.Default.Name
+					if (input.KeyCode.Name == inputName) then
+						Config.Callback(Config.Default)
+					elseif input.UserInputType == Enum.UserInputType.MouseButton1 and inputName == "MouseLeft" then
+						Config.Callback("MouseLeft")
+					elseif input.UserInputType == Enum.UserInputType.MouseButton2 and inputName == "MouseRight" then
+						Config.Callback("MouseRight")
+					end
+				end)
+			end
+
 			Keybind.SetValue(Selected);
 
 			IsBinding = false;
