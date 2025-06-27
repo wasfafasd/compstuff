@@ -3576,16 +3576,18 @@ function Compkiller:_LoadElement(Parent: Frame , EnabledLine: boolean , Signal)
   		Blacklist = {}
   	})
 
-	local Block = Compkiller:_CreateBlock(TabSignal)
-	
-	Block:SetParent(Value.Root or Parent) -- Ensure Value.Root exists
-	Block:SetText(Config.Name)
-	Block:SetLine(true)
-	Block:SetVisible(TabSignal:GetValue())
-	
-	local Keybind = Block:AddLink("Keybind", Config.Default)
-  
-  	local Keybind = Value:AddLink("Keybind", Config.Default)
+	local Block = Compkiller:_CreateBlock(Signal);
+
+	Block:SetParent(Parent);
+
+	Block:SetText(Config.Name);
+
+	Block:SetLine(EnabledLine);
+
+	Block:SetVisible(Signal:GetValue());
+
+	local Keybind = Block:AddLink('Keybind' , Config.Default);
+
   	local IsBinding = false
   
   	local function IsBlacklist(v)
